@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -161,6 +160,7 @@
   .sidebar-item {
     @apply px-2 py-1 cursor-pointer text-xs flex items-center;
     color: var(--win98-text);
+    border: 1px solid transparent;
   }
 
   .sidebar-item:hover {
@@ -171,6 +171,10 @@
   .sidebar-item.active {
     background: var(--win98-highlight);
     color: var(--win98-white);
+    border-top: 1px solid var(--win98-border-dark);
+    border-left: 1px solid var(--win98-border-dark);
+    border-right: 1px solid var(--win98-border-light);
+    border-bottom: 1px solid var(--win98-border-light);
   }
 
   /* Enhanced Toast Visibility */
