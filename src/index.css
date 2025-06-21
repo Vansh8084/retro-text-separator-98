@@ -55,7 +55,8 @@
     background: #d4d0c8;
   }
 
-  .win98-button:active {
+  .win98-button:active,
+  .win98-button-pressed {
     border-top: 1px solid var(--win98-border-dark);
     border-left: 1px solid var(--win98-border-dark);
     border-right: 1px solid var(--win98-border-light);

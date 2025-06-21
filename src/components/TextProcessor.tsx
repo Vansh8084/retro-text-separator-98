@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ContentBox from './ContentBox';
 import { useToast } from '@/hooks/use-toast';
 
@@ -10,95 +10,76 @@ interface DetectedContent {
 
 const TextProcessor: React.FC = () => {
   const [rawText, setRawText] = useState('');
+  const [customSeparator, setCustomSeparator] = useState('');
   const [detectedContent, setDetectedContent] = useState<DetectedContent[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
 
-  const detectSeparatedContent = (text: string): DetectedContent[] => {
-    const results: DetectedContent[] = [];
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedContent = localStorage.getItem('textSeparatorContent');
+    const savedSeparator = localStorage.getItem('textSeparatorCustomSeparator');
     
-    // Split by lines for processing
-    const lines = text.split('\n');
-    let currentItem = '';
-    let currentType = '';
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      // Skip empty lines
-      if (!line) {
-        if (currentItem && currentType) {
-          results.push({ content: currentItem.trim(), type: currentType });
-          currentItem = '';
-          currentType = '';
-        }
-        continue;
-      }
-      
-      // Detect numbered lists (1., 2., etc.)
-      const numberedMatch = line.match(/^(\d+)\.\s+(.*)$/);
-      if (numberedMatch) {
-        if (currentItem && currentType) {
-          results.push({ content: currentItem.trim(), type: currentType });
-        }
-        currentItem = numberedMatch[2];
-        currentType = `Numbered Item (${numberedMatch[1]})`;
-        continue;
-      }
-      
-      // Detect lettered lists (a., b., etc.)
-      const letteredMatch = line.match(/^([a-zA-Z])\.\s+(.*)$/);
-      if (letteredMatch) {
-        if (currentItem && currentType) {
-          results.push({ content: currentItem.trim(), type: currentType });
-        }
-        currentItem = letteredMatch[2];
-        currentType = `Lettered Item (${letteredMatch[1]})`;
-        continue;
-      }
-      
-      // Detect bullet points (-, *, •)
-      const bulletMatch = line.match(/^[-*•]\s+(.*)$/);
-      if (bulletMatch) {
-        if (currentItem && currentType) {
-          results.push({ content: currentItem.trim(), type: currentType });
-        }
-        currentItem = bulletMatch[1];
-        currentType = 'Bullet Point';
-        continue;
-      }
-      
-      // Detect Roman numerals (i., ii., etc.)
-      const romanMatch = line.match(/^([ivxlcdm]+)\.\s+(.*)$/i);
-      if (romanMatch) {
-        if (currentItem && currentType) {
-          results.push({ content: currentItem.trim(), type: currentType });
-        }
-        currentItem = romanMatch[2];
-        currentType = `Roman Numeral (${romanMatch[1]})`;
-        continue;
-      }
-      
-      // Detect step indicators (Step 1:, Step 2:, etc.)
-      const stepMatch = line.match(/^step\s+(\d+):?\s+(.*)$/i);
-      if (stepMatch) {
-        if (currentItem && currentType) {
-          results.push({ content: currentItem.trim(), type: currentType });
-        }
-        currentItem = stepMatch[2];
-        currentType = `Step ${stepMatch[1]}`;
-        continue;
-      }
-      
-      // If we have a current item, append this line to it
-      if (currentItem) {
-        currentItem += '\n' + line;
+    if (savedContent) {
+      try {
+        setDetectedContent(JSON.parse(savedContent));
+      } catch (error) {
+        console.error('Error loading saved content:', error);
       }
     }
     
-    // Add the last item if it exists
-    if (currentItem && currentType) {
-      results.push({ content: currentItem.trim(), type: currentType });
+    if (savedSeparator) {
+      setCustomSeparator(savedSeparator);
+    }
+  }, []);
+
+  // Save to localStorage whenever detectedContent changes
+  useEffect(() => {
+    localStorage.setItem('textSeparatorContent', JSON.stringify(detectedContent));
+  }, [detectedContent]);
+
+  // Save custom separator to localStorage
+  useEffect(() => {
+    localStorage.setItem('textSeparatorCustomSeparator', customSeparator);
+  }, [customSeparator]);
+
+  const detectSeparatedContent = (text: string): DetectedContent[] => {
+    const results: DetectedContent[] = [];
+    
+    // First, try to split by <_> separator
+    if (text.includes('<_>')) {
+      const parts = text.split('<_>').filter(part => part.trim());
+      parts.forEach((part, index) => {
+        if (part.trim()) {
+          results.push({
+            content: part.trim(),
+            type: `<_> Separated Item ${index + 1}`
+          });
+        }
+      });
+      return results;
+    }
+    
+    // Then try custom separator if provided
+    if (customSeparator && text.includes(customSeparator)) {
+      const parts = text.split(customSeparator).filter(part => part.trim());
+      parts.forEach((part, index) => {
+        if (part.trim()) {
+          results.push({
+            content: part.trim(),
+            type: `Custom Separated Item ${index + 1}`
+          });
+        }
+      });
+      return results;
+    }
+    
+    // Fallback: treat as single content if no separators found
+    if (text.trim()) {
+      results.push({
+        content: text.trim(),
+        type: 'Single Content'
+      });
     }
     
     return results;
@@ -115,7 +96,8 @@ const TextProcessor: React.FC = () => {
     }
     
     const detected = detectSeparatedContent(rawText);
-    setDetectedContent(detected);
+    const newContent = [...detectedContent, ...detected];
+    setDetectedContent(newContent);
     
     toast({
       title: "Text Processed",
@@ -161,17 +143,51 @@ const TextProcessor: React.FC = () => {
     }
   };
 
+  const handleClearAll = () => {
+    setDetectedContent([]);
+    localStorage.removeItem('textSeparatorContent');
+    toast({
+      title: "Cleared",
+      description: "All content cleared",
+    });
+  };
+
   return (
     <div className="flex-1 p-4">
       <div className="win98-panel p-4 h-full">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-sm font-bold">Text Content Separator</h2>
-          <button
-            className="win98-button"
-            onClick={() => setShowAddDialog(true)}
-          >
-            ➕ Add Text
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="win98-button"
+              onClick={() => setShowAddDialog(true)}
+            >
+              ➕ Add Text
+            </button>
+            {detectedContent.length > 0 && (
+              <button
+                className="win98-button"
+                onClick={handleClearAll}
+              >
+                🗑️ Clear All
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Custom Separator Input */}
+        <div className="mb-4 win98-panel-inset p-2">
+          <label className="block text-xs mb-1">Custom Separator (optional):</label>
+          <input
+            type="text"
+            className="win98-input"
+            value={customSeparator}
+            onChange={(e) => setCustomSeparator(e.target.value)}
+            placeholder="Enter custom separator text..."
+          />
+          <div className="text-xs mt-1 text-gray-600">
+            Default separator: &lt;_&gt; | Current: {customSeparator || '<_>'}
+          </div>
         </div>
 
         {showAddDialog && (
@@ -193,7 +209,7 @@ const TextProcessor: React.FC = () => {
                   rows={10}
                   value={rawText}
                   onChange={(e) => setRawText(e.target.value)}
-                  placeholder="Paste or type your text here..."
+                  placeholder="Use <_> to separate content or your custom separator..."
                 />
               </div>
               <div className="flex justify-end gap-2">
@@ -221,6 +237,7 @@ const TextProcessor: React.FC = () => {
               <div className="text-2xl mb-2">📝</div>
               <div className="text-xs">No separated content detected</div>
               <div className="text-xs mt-1">Click "Add Text" to get started</div>
+              <div className="text-xs mt-1">Use &lt;_&gt; or custom separator to split content</div>
             </div>
           ) : (
             <div className="space-y-2">
