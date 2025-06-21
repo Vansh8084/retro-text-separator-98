@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ContentBox from './ContentBox';
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +32,9 @@ const TextProcessor: React.FC<TextProcessorProps> = ({
   const [detectedContent, setDetectedContent] = useState<DetectedContent[]>([]);
   const [removedContent, setRemovedContent] = useState<DetectedContent[]>([]);
   const [showBulkAddDialog, setShowBulkAddDialog] = useState(false);
+  const [showBulkSuffixDialog, setShowBulkSuffixDialog] = useState(false);
   const [bulkAddText, setBulkAddText] = useState('');
+  const [bulkSuffixText, setBulkSuffixText] = useState('');
   const { toast } = useToast();
 
   // Load data from localStorage on component mount
@@ -160,6 +161,23 @@ const TextProcessor: React.FC<TextProcessorProps> = ({
     }
   };
 
+  const handleEdit = (index: number, newContent: string) => {
+    const currentData = activeFolder === 'saved' ? detectedContent : removedContent;
+    const updatedData = [...currentData];
+    updatedData[index] = { ...updatedData[index], content: newContent };
+    
+    if (activeFolder === 'saved') {
+      setDetectedContent(updatedData);
+    } else {
+      setRemovedContent(updatedData);
+    }
+    
+    toast({
+      title: "Updated",
+      description: "Content updated successfully",
+    });
+  };
+
   const handleRemove = (index: number) => {
     const currentData = activeFolder === 'saved' ? detectedContent : removedContent;
     const itemToRemove = currentData[index];
@@ -233,6 +251,22 @@ const TextProcessor: React.FC<TextProcessorProps> = ({
     }
   };
 
+  const handleBulkAddSuffix = () => {
+    if (bulkSuffixText.trim()) {
+      const updatedContent = detectedContent.map(item => ({
+        ...item,
+        content: `${item.content} ${bulkSuffixText}`
+      }));
+      setDetectedContent(updatedContent);
+      setBulkSuffixText('');
+      setShowBulkSuffixDialog(false);
+      toast({
+        title: "Suffix Added",
+        description: "Suffix added to all items",
+      });
+    }
+  };
+
   const currentData = activeFolder === 'saved' ? detectedContent : removedContent;
   const totalPages = Math.ceil(currentData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -268,6 +302,13 @@ const TextProcessor: React.FC<TextProcessorProps> = ({
                 >
                   <Plus className="w-3 h-3 mr-1" />
                   Add Prefix
+                </button>
+                <button
+                  className="win98-button"
+                  onClick={() => setShowBulkSuffixDialog(true)}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Suffix
                 </button>
               </>
             )}
@@ -391,6 +432,48 @@ const TextProcessor: React.FC<TextProcessorProps> = ({
           </div>
         )}
 
+        {/* Bulk Add Suffix Dialog */}
+        {showBulkSuffixDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-200 border-2 border-gray-400 p-4 min-w-96">
+              <div className="win98-titlebar mb-2">
+                <span>Add Suffix to All Items</span>
+                <button
+                  className="win98-control-button"
+                  onClick={() => setShowBulkSuffixDialog(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="block text-xs mb-1">Enter suffix text:</label>
+                <input
+                  type="text"
+                  className="win98-input"
+                  value={bulkSuffixText}
+                  onChange={(e) => setBulkSuffixText(e.target.value)}
+                  placeholder="Text to add after each item..."
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="win98-button"
+                  onClick={() => setShowBulkSuffixDialog(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="win98-button"
+                  onClick={handleBulkAddSuffix}
+                  disabled={!bulkSuffixText.trim()}
+                >
+                  Add Suffix
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="win98-panel-inset p-2 h-5/6 overflow-y-auto win98-scrollbar">
           {paginatedData.length === 0 ? (
             <div className="text-center text-gray-500 mt-8">
@@ -421,6 +504,7 @@ const TextProcessor: React.FC<TextProcessorProps> = ({
                   onCopy={handleCopy}
                   onRemove={handleRemove}
                   onCopyAndRemove={handleCopyAndRemove}
+                  onEdit={handleEdit}
                 />
               ))}
             </div>
