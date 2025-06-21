@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Folder, Plus } from 'lucide-react';
+import { Folder, Plus, Filter } from 'lucide-react';
 
 interface SidebarProps {
   activeFolder: string;
