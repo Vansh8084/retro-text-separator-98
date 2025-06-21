@@ -8,12 +8,12 @@
 
 @layer base {
   :root {
-    /* Windows 98 Color Palette */
-    --win98-bg: #c0c0c0;
-    --win98-bg-light: #d4d0c8;
-    --win98-bg-dark: #808080;
-    --win98-border-light: #dfdfdf;
-    --win98-border-dark: #404040;
+    /* Windows 98 Color Palette - Brighter greys */
+    --win98-bg: #d4d0c8;
+    --win98-bg-light: #e8e4dc;
+    --win98-bg-dark: #9c9c9c;
+    --win98-border-light: #f0f0f0;
+    --win98-border-dark: #505050;
     --win98-title-bg: #0080ff;
     --win98-title-text: #ffffff;
     --win98-text: #000000;
@@ -52,7 +52,7 @@
   }
 
   .win98-button:hover {
-    background: #d4d0c8;
+    background: #e8e4dc;
   }
 
   .win98-button:active,
@@ -61,7 +61,7 @@
     border-left: 1px solid var(--win98-border-dark);
     border-right: 1px solid var(--win98-border-light);
     border-bottom: 1px solid var(--win98-border-light);
-    background: #b8b4ac;
+    background: #c8c4bc;
   }
 
   /* Windows 98 Panel Style */
@@ -102,7 +102,7 @@
   }
 
   .win98-control-button:hover {
-    background: #d4d0c8;
+    background: #e8e4dc;
   }
 
   .win98-control-button:active {
@@ -171,5 +171,36 @@
   .sidebar-item.active {
     background: var(--win98-highlight);
     color: var(--win98-white);
+  }
+
+  /* Enhanced Toast Visibility */
+  .toast {
+    background: var(--win98-bg) !important;
+    border: 2px solid var(--win98-border-dark) !important;
+    color: var(--win98-text) !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3) !important;
+    z-index: 9999 !important;
+  }
+
+  .toast[data-type="success"] {
+    background: #c0ffc0 !important;
+    border-color: #00aa00 !important;
+  }
+
+  .toast[data-type="error"] {
+    background: #ffc0c0 !important;
+    border-color: #aa0000 !important;
+  }
+
+  .toast .toast-title {
+    font-weight: bold !important;
+    margin-bottom: 4px !important;
+  }
+
+  .toast .toast-description {
+    font-size: 11px !important;
   }
 }

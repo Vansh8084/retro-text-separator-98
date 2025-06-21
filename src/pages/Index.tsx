@@ -47,7 +47,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-200" style={{ backgroundColor: 'var(--win98-bg)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--win98-bg)' }}>
       <div className="h-screen flex flex-col win98-panel">
         <WindowHeader
           title="Text Separator 98 - Microsoft Windows"
